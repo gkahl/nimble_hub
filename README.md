@@ -1,7 +1,7 @@
-#Nimble Hub Image Recognition
+# Nimble Hub Image Recognition
 
-###Members:
--Holden Crochiere
--Greg Kahl
--Sophia Martinez
--Jonathan Ntale
+### Members:
+- Holden Crochiere
+- Greg Kahl
+- Sophia Martinez
+- Jonathan Ntale
