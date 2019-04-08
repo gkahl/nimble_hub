@@ -4,7 +4,7 @@ import cv2
 import zbar
 
 
-img = cv2.imread('/home/greg/opencv_project/3qr.jpg', 0)
+img = cv2.imread('/home/pi/nimble_hub/pictures/foo.jpg', 0)
 
 cv2.imshow('image', img)
 cv2.waitKey(0)
