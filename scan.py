@@ -5,10 +5,11 @@ import zbar
 import sys
 
 
+<<<<<<< HEAD
 if len(sys.argv) > 1:
     path = ('/home/greg/nimble_hub/pictures/' + sys.argv[1])
 else:
-    path = '/home/greg/nimble_hub/pictures/adj_2.png'
+    path = '/home/greg/nimble_hub/pictures/foo.jpg'
 
 img = cv2.imread(path, 0)
 
