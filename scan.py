@@ -5,7 +5,6 @@ import zbar
 import sys
 
 
-<<<<<<< HEAD
 if len(sys.argv) > 1:
     path = ('/home/greg/nimble_hub/pictures/' + sys.argv[1])
 else:
