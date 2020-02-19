@@ -1,0 +1,9 @@
+Barcode Types:
+QR-Code
+
+
+Message:
+b'nimble_hub'
+
+Count:
+4
