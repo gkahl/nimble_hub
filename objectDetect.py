@@ -10,16 +10,11 @@ bw_filtered = None
 gray_img = None
 depth_image = None
 color_image = None
+bw_img = None
 font = cv2.FONT_HERSHEY_COMPLEX
 
 #function defs
-def colorFrame ():
-    global depth_frame
-    global color_frame
-    global bw_filtered
-    global depth_image
-    global color_image
-    
+   
 def initializeFrames():
     global depth_frame
     global color_frame
@@ -110,8 +105,77 @@ def initializeFrames():
         pipeline.stop()
         return;
     
-    
-def shapefind(contours,gray_img,color_image,depth_frame,bHeight):
+def backgroundHeight(depth_frame):
+    corner1= 0
+    corner2= 0
+    corner3= 0
+    corner4= 0
+    i= 0
+    j= 0
+    k= 0
+    l = 0
+
+    while corner1 == 0:
+        corner1 = depth_frame.get_distance(10+i,10+i)
+        i=i+1
+    while corner2 == 0:
+        corner2 = depth_frame.get_distance(630-j,10+j)
+        j=j+1
+    while corner3 == 0:
+        corner3 = depth_frame.get_distance(10+k,470-k)
+        k=k+1
+    while corner4 == 0:
+        corner4 = depth_frame.get_distance(630-l,470-l)
+        l=l+1
+    bHeight = (corner1+corner2+corner3+corner4) / 4
+    return bHeight;
+
+def printOutput(sides,trueArea,height,vol,mean,x,y):
+    if (sides == 3 ):
+        cv2.putText(color_image,"Triangle",(x,y),font,1,(0))
+        print('Triangle of area '+ str(trueArea) + " detected")
+        print('Triangle is ' + str(height) + ' centimeters tall')
+        print('Volume of: ' + str(vol) + " centimeters cubed")
+        return(height,vol,trueArea,mean,0)      
+    if (sides == 4 ):
+        cv2.putText(color_image,"Square",(x,y),font,1,(0))
+        print('Square of area '+ str(trueArea) + " detected")
+        print('Square is ' + str(height) + ' centimeters tall')
+        print('Volume of: ' + str(vol) + " centimeters cubed")              
+        return(height,vol,trueArea,mean,1)
+            
+    if (sides == 5 ):
+        cv2.putText(color_image,"Pentagon",(x,y),font,1,(0))
+        print('Pentagon of area '+ str(trueArea) + " detected")
+        print('Pentagon is ' + str(height) + ' centimeters tall')
+        print('Volume of: ' + str(vol) + " centimeters cubed")
+        return(height,vol,trueArea,mean,2)
+                
+    if (sides == 6 ):
+        cv2.putText(color_image,"Hexagon",(x,y),font,1,(0))
+        print('Hexagon of area '+ str(trueArea) + " detected")
+        print('Hexagon is ' + str(height) + ' centimeters tall')
+        print('Volume of: ' + str(vol) + " centimeters cubed")
+        return(height,vol,trueArea,mean,3)
+            
+    if (sides > 6 ):
+        cv2.putText(color_image,"Circle",(x,y),font,1,(0))
+        print('Circle of area '+ str(trueArea) + " detected")
+        print('Circle is ' + str(height) + ' centimeters tall')
+        print('Volume of: ' + str(vol) + " centimeters cubed")
+        return(height,vol,trueArea,mean,4)
+
+def shapefind(gray_img):
+    global depth_frame
+    global color_frame
+    global bw_filtered
+    global depth_image
+    global color_image
+    global bw_img
+    shapeList=[]
+    bHeight = backgroundHeight(depth_frame)
+     # Find the contours using the Canny Edges image
+    _, contours, _= cv2.findContours(bw_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     # Determine the Shape
     for cnt in contours:
         approx = cv2.approxPolyDP(cnt, 0.02*cv2.arcLength(cnt,True),True)
@@ -151,101 +215,30 @@ def shapefind(contours,gray_img,color_image,depth_frame,bHeight):
             height = bHeight - cHeight
             height = height/100
             vol = trueArea*height
-            if (len(approx) == 3 ):
-                cv2.putText(color_image,"Triangle",(x,y),font,1,(0))
-                print('Triangle of area '+ str(trueArea) + " detected")
-                print('Triangle is ' + str(height) + ' centimeters tall')
-                print('Volume of: ' + str(vol) + " centimeters cubed")
-                return[height,vol,trueArea,mean,0]
-
-                
-            if (len(approx) == 4 ):
-                cv2.putText(color_image,"Square",(x,y),font,1,(0))
-                print('Square of area '+ str(trueArea) + " detected")
-                print('Square is ' + str(height) + ' centimeters tall')
-                print('Volume of: ' + str(vol) + " centimeters cubed")              
-                return[height,vol,trueArea,mean,1]
+            shapeList.append(printOutput(len(approx),trueArea,height,vol,mean,x,y))
+        return(shapeList)
             
-            if (len(approx) == 5 ):
-                cv2.putText(color_image,"Pentagon",(x,y),font,1,(0))
-                print('Pentagon of area '+ str(trueArea) + " detected")
-                print('Pentagon is ' + str(height) + ' centimeters tall')
-                print('Volume of: ' + str(vol) + " centimeters cubed")
-                return[height,vol,trueArea,mean,2]
-                
-            if (len(approx) == 6 ):
-                cv2.putText(color_image,"Hexagon",(x,y),font,1,(0))
-                print('Hexagon of area '+ str(trueArea) + " detected")
-                print('Hexagon is ' + str(height) + ' centimeters tall')
-                print('Volume of: ' + str(vol) + " centimeters cubed")
-                return[height,vol,trueArea,mean,3]
-            
-            if (len(approx) > 6 ):
-                cv2.putText(color_image,"Circle",(x,y),font,1,(0))
-                print('Circle of area '+ str(trueArea) + " detected")
-                print('Circle is ' + str(height) + ' centimeters tall')
-                print('Volume of: ' + str(vol) + " centimeters cubed")
-                return[height,vol,trueArea,mean,4]
-            
-            print()
-            return;
-        
-def backgroundHeight(depth_frame):
-    corner1= 0
-    corner2= 0
-    corner3= 0
-    corner4= 0
-    i= 0
-    j= 0
-    k= 0
-    l = 0
 
-    while corner1 == 0:
-        corner1 = depth_frame.get_distance(10+i,10+i)
-        i=i+1
-    while corner2 == 0:
-        corner2 = depth_frame.get_distance(630-j,10+j)
-        j=j+1
-    while corner3 == 0:
-        corner3 = depth_frame.get_distance(10+k,470-k)
-        k=k+1
-    while corner4 == 0:
-        corner4 = depth_frame.get_distance(630-l,470-l)
-        l=l+1
-    bHeight = (corner1+corner2+corner3+corner4) / 4
-    return bHeight;
-#functions defined
-#initialize START
-initializeFrames()
 
-#initialize END
-    
+def imageManip():
+    global depth_frame
+    global color_frame
+    global bw_filtered
+    global depth_image
+    global color_image
+    global bw_img
     # Running Canny Edge Detection and Ouputting the Results to Output Directory
-bw_filtered = bw_filtered*255
-bw_filtered = np.uint8(bw_filtered)
-cv2.imwrite('/home/pi/nimble_hub/oputputs/bw_filtered.jpg',bw_filtered)
+    bw_filtered = bw_filtered*255
+    bw_filtered = np.uint8(bw_filtered)
+    cv2.imwrite('/home/pi/nimble_hub/oputputs/bw_filtered.jpg',bw_filtered)
 
-    # Tried doing it on the color image
-gray_img = cv2.cvtColor(color_image,cv2.COLOR_BGR2GRAY)
-cv2.imwrite('/home/pi/nimble_hub/outputs/color_bw.jpg',gray_img)
-thresh = 100
-bw_img = cv2.threshold(gray_img, thresh, 255, cv2.THRESH_BINARY)[1]
-cv2.imwrite('/home/pi/nimble_hub/outputs/bw.jpg',bw_img)
-    
-edges = cv2.Canny(gray_img,100,250)
-cv2.imwrite('/home/pi/nimble_hub/outputs/uncanny.jpg',edges)
-    
-    
-# Find the contours using the Canny Edges image
-_, contours, _= cv2.findContours(bw_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    
-# Calculate the Average Distance of the background from the camera
-bHeight = backgroundHeight(depth_frame)
-    
-shapefind(contours,gray_img,color_image,depth_frame,bHeight)
-
-cv2.imwrite('/home/pi/nimble_hub/outputs/approx.jpg',bw_img)   
-    
-cv2.drawContours(color_image, contours, -1, (0,255,0), 3)
-cv2.imwrite('/home/pi/nimble_hub/outputs/countours2.jpg',color_image)
-    
+        # Tried doing it on the color image
+    gray_img = cv2.cvtColor(color_image,cv2.COLOR_BGR2GRAY)
+    cv2.imwrite('/home/pi/nimble_hub/outputs/color_bw.jpg',gray_img)
+    thresh = 100
+    bw_img = cv2.threshold(gray_img, thresh, 255, cv2.THRESH_BINARY)[1]
+    cv2.imwrite('/home/pi/nimble_hub/outputs/bw.jpg',bw_img)
+        
+    edges = cv2.Canny(gray_img,100,250)
+    cv2.imwrite('/home/pi/nimble_hub/outputs/uncanny.jpg',edges)
+#functions defined
