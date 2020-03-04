@@ -35,7 +35,7 @@ def initializeFrames():
     for dev in devices:
         sensors=dev.query_sensors()
     for sensor in sensors:
-        sensor.set_option(rs.option.exposure,500.0)
+        sensor.set_option(rs.option.exposure,1000.0)
     config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
     config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
 
@@ -131,17 +131,20 @@ def backgroundHeight(depth_frame):
     return bHeight;
 
 def printOutput(sides,trueArea,height,vol,mean,x,y):
+    cv2.imwrite('/home/pi/nimble_hub/outputs/contours2.jpg',color_image)
     if (sides == 3 ):
         cv2.putText(color_image,"Triangle",(x,y),font,1,(0))
         print('Triangle of area '+ str(trueArea) + " detected")
         print('Triangle is ' + str(height) + ' centimeters tall')
         print('Volume of: ' + str(vol) + " centimeters cubed")
+        cv2.imwrite('/home/pi/nimble_hub/outputs/contours2.jpg',color_image)
         return(height,vol,trueArea,mean,0)      
     if (sides == 4 ):
         cv2.putText(color_image,"Square",(x,y),font,1,(0))
         print('Square of area '+ str(trueArea) + " detected")
         print('Square is ' + str(height) + ' centimeters tall')
-        print('Volume of: ' + str(vol) + " centimeters cubed")              
+        print('Volume of: ' + str(vol) + " centimeters cubed")
+        cv2.imwrite('/home/pi/nimble_hub/outputs/contours2.jpg',color_image)
         return(height,vol,trueArea,mean,1)
             
     if (sides == 5 ):
@@ -149,6 +152,7 @@ def printOutput(sides,trueArea,height,vol,mean,x,y):
         print('Pentagon of area '+ str(trueArea) + " detected")
         print('Pentagon is ' + str(height) + ' centimeters tall')
         print('Volume of: ' + str(vol) + " centimeters cubed")
+        cv2.imwrite('/home/pi/nimble_hub/outputs/contours2.jpg',color_image)
         return(height,vol,trueArea,mean,2)
                 
     if (sides == 6 ):
@@ -156,6 +160,7 @@ def printOutput(sides,trueArea,height,vol,mean,x,y):
         print('Hexagon of area '+ str(trueArea) + " detected")
         print('Hexagon is ' + str(height) + ' centimeters tall')
         print('Volume of: ' + str(vol) + " centimeters cubed")
+        cv2.imwrite('/home/pi/nimble_hub/outputs/contours2.jpg',color_image)
         return(height,vol,trueArea,mean,3)
             
     if (sides > 6 ):
@@ -163,7 +168,9 @@ def printOutput(sides,trueArea,height,vol,mean,x,y):
         print('Circle of area '+ str(trueArea) + " detected")
         print('Circle is ' + str(height) + ' centimeters tall')
         print('Volume of: ' + str(vol) + " centimeters cubed")
+        cv2.imwrite('/home/pi/nimble_hub/outputs/contours2.jpg',color_image)
         return(height,vol,trueArea,mean,4)
+    
 
 def shapefind(gray_img):
     global depth_frame
@@ -179,10 +186,11 @@ def shapefind(gray_img):
     # Determine the Shape
     for cnt in contours:
         approx = cv2.approxPolyDP(cnt, 0.02*cv2.arcLength(cnt,True),True)
-        cv2.drawContours(gray_img, [approx], 0,(0),2)
+        cv2.drawContours(color_image, [approx], 0,(0,255,0),2)
+        cv2.imwrite('/home/pi/nimble_hub/outputs/contours.jpg',color_image)
         x = approx.ravel()[0]
         y = approx.ravel()[1]
-        if len(cnt)>10:
+        if len(cnt)>100:
             #Finding the Area of each shape
             area = cv2.contourArea(cnt)
             
@@ -194,7 +202,6 @@ def shapefind(gray_img):
                 
             cHeight = 0
             i=0
-            colorPoint = None
             while cHeight == 0:
                 cHeight = depth_frame.get_distance(cX+i,cY)
                     
@@ -202,11 +209,12 @@ def shapefind(gray_img):
                 print('Distance to object is: ' + str(cHeight))
                 
                 i=i+1
-            i=0
             mask = np.zeros(color_image.shape[:2],dtype="uint8")
             cv2.drawContours(mask,[cnt],-1,255,-1)
             mask = cv2.erode(mask,None,iterations=2)
-            mean = cv2.mean(color_image,mask=mask)[:3]
+
+            hsv = cv2.cvtColor(color_image,cv2.COLOR_BGR2HSV)
+            mean = cv2.mean(hsv,mask=mask)[:3]
             print("mean color = "+ str(mean))
             print("Pixels "+ str(area))
             pixelMulti= (579956*(cHeight*100)**-2.098)
@@ -216,7 +224,7 @@ def shapefind(gray_img):
             height = height/100
             vol = trueArea*height
             shapeList.append(printOutput(len(approx),trueArea,height,vol,mean,x,y))
-        return(shapeList)
+    return(shapeList)
             
 
 
