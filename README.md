@@ -25,6 +25,9 @@ When a new object is detected, we compare its statistics to all the existing obj
 
 ## Usage
 In order to use N.H.O.R.S. you must install the numpy package,OpenCV 2,and the pyrealsense2 package.
+
 In order to install numpy run the cli command: `pip3 install numpy --user`
+
 To install OpenCV run: `pip3 install opencv-python --user`
-To install the pyrealsense2 package locate the `librealsense2.soi` and `pyrealsensse2.cpython-35m-arm-linux-gnueabihf.so` files online and copy them to the nimble_hub folder
+
+To install the pyrealsense2 package locate the `librealsense2.so` and `pyrealsensse2.cpython-35m-arm-linux-gnueabihf.so` files online and copy them to the nimble_hub folder
