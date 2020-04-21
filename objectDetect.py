@@ -15,16 +15,13 @@ font = cv2.FONT_HERSHEY_COMPLEX
 
 #function defs
    
-def initializeFrames():
+def initializeFrames(exposure):
     global depth_frame
     global color_frame
     global bw_filtered
     global depth_image
     global color_image
     
-
-
-
     np.set_printoptions(threshold=sys.maxsize)
 
     # Configure depth and color streams
@@ -35,7 +32,7 @@ def initializeFrames():
     for dev in devices:
         sensors=dev.query_sensors()
     for sensor in sensors:
-        sensor.set_option(rs.option.exposure,1000.0)
+        sensor.set_option(rs.option.exposure,exposure)
     config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
     config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
 
@@ -133,14 +130,16 @@ def backgroundHeight(depth_frame):
 def printOutput(sides,trueArea,height,vol,mean,x,y):
     cv2.imwrite('/home/pi/nimble_hub/outputs/contours2.jpg',color_image)
     if (sides == 3 ):
-        cv2.putText(color_image,"Triangle",(x,y),font,1,(0))
+        cv2.putText(color_image,"Triangle",(x,y),font,0.5,(0))
+        cv2.putText(color_image,"Volume:"+str(round(vol,4)),(x,y+20),font,0.5,(0))
         print('Triangle of area '+ str(trueArea) + " detected")
         print('Triangle is ' + str(height) + ' centimeters tall')
         print('Volume of: ' + str(vol) + " centimeters cubed")
         cv2.imwrite('/home/pi/nimble_hub/outputs/contours2.jpg',color_image)
-        return(height,vol,trueArea,mean,0)      
+        return(height,vol,trueArea,mean,0)    
     if (sides == 4 ):
-        cv2.putText(color_image,"Square",(x,y),font,1,(0))
+        cv2.putText(color_image,"Square",(x,y),font,0.5,(0))
+        cv2.putText(color_image,"Volume:"+str(round(vol,4)),(x,y+20),font,0.5,(0))
         print('Square of area '+ str(trueArea) + " detected")
         print('Square is ' + str(height) + ' centimeters tall')
         print('Volume of: ' + str(vol) + " centimeters cubed")
@@ -148,7 +147,8 @@ def printOutput(sides,trueArea,height,vol,mean,x,y):
         return(height,vol,trueArea,mean,1)
             
     if (sides == 5 ):
-        cv2.putText(color_image,"Pentagon",(x,y),font,1,(0))
+        cv2.putText(color_image,"Pentagon",(x,y),font,0.5,(0))
+        cv2.putText(color_image,"Volume:"+str(round(vol,4)),(x,y+20),font,0.5,(0))
         print('Pentagon of area '+ str(trueArea) + " detected")
         print('Pentagon is ' + str(height) + ' centimeters tall')
         print('Volume of: ' + str(vol) + " centimeters cubed")
@@ -156,7 +156,8 @@ def printOutput(sides,trueArea,height,vol,mean,x,y):
         return(height,vol,trueArea,mean,2)
                 
     if (sides == 6 ):
-        cv2.putText(color_image,"Hexagon",(x,y),font,1,(0))
+        cv2.putText(color_image,"Hexagon",(x,y),font,0.5,(0))
+        cv2.putText(color_image,"Volume:"+str(round(vol,4)),(x,y+20),font,0.5,(0))
         print('Hexagon of area '+ str(trueArea) + " detected")
         print('Hexagon is ' + str(height) + ' centimeters tall')
         print('Volume of: ' + str(vol) + " centimeters cubed")
@@ -164,7 +165,8 @@ def printOutput(sides,trueArea,height,vol,mean,x,y):
         return(height,vol,trueArea,mean,3)
             
     if (sides > 6 ):
-        cv2.putText(color_image,"Circle",(x,y),font,1,(0))
+        cv2.putText(color_image,"Circle",(x,y),font,0.5,(0))
+        cv2.putText(color_image,"Volume:"+str(round(vol,4)),(x,y+20),font,0.5,(0))
         print('Circle of area '+ str(trueArea) + " detected")
         print('Circle is ' + str(height) + ' centimeters tall')
         print('Volume of: ' + str(vol) + " centimeters cubed")
@@ -182,12 +184,11 @@ def shapefind(gray_img):
     shapeList=[]
     bHeight = backgroundHeight(depth_frame)
      # Find the contours using the Canny Edges image
-    _, contours, _= cv2.findContours(bw_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    _, contours, _= cv2.findContours(bw_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     # Determine the Shape
     for cnt in contours:
         approx = cv2.approxPolyDP(cnt, 0.02*cv2.arcLength(cnt,True),True)
-        cv2.drawContours(color_image, [approx], 0,(0,255,0),2)
-        cv2.imwrite('/home/pi/nimble_hub/outputs/contours.jpg',color_image)
+        #cv2.drawContours(color_image, [approx], 0,(0,255,0),2)
         x = approx.ravel()[0]
         y = approx.ravel()[1]
         if len(cnt)>100:
@@ -211,6 +212,9 @@ def shapefind(gray_img):
                 i=i+1
             mask = np.zeros(color_image.shape[:2],dtype="uint8")
             cv2.drawContours(mask,[cnt],-1,255,-1)
+            #cv2.drawContours(color_image,[cnt],-1,255,-1)
+            cv2.drawContours(color_image, [cnt], 0,(0,255,0),2)
+            cv2.imwrite('/home/pi/nimble_hub/outputs/contours.jpg',color_image)
             mask = cv2.erode(mask,None,iterations=2)
 
             hsv = cv2.cvtColor(color_image,cv2.COLOR_BGR2HSV)
@@ -221,20 +225,21 @@ def shapefind(gray_img):
             #pixelMulti = pixelMulti
             trueArea = area/pixelMulti
             height = bHeight - cHeight
-            height = height/100
+            height = height*100
             vol = trueArea*height
-            shapeList.append(printOutput(len(approx),trueArea,height,vol,mean,x,y))
+            shapeList.append(printOutput(len(approx),trueArea,height,vol,mean,cX,cY))
     return(shapeList)
             
 
 
-def imageManip():
+def imageManip(threshold):
     global depth_frame
     global color_frame
     global bw_filtered
     global depth_image
     global color_image
     global bw_img
+
     # Running Canny Edge Detection and Ouputting the Results to Output Directory
     bw_filtered = bw_filtered*255
     bw_filtered = np.uint8(bw_filtered)
@@ -243,8 +248,7 @@ def imageManip():
         # Tried doing it on the color image
     gray_img = cv2.cvtColor(color_image,cv2.COLOR_BGR2GRAY)
     cv2.imwrite('/home/pi/nimble_hub/outputs/color_bw.jpg',gray_img)
-    thresh = 100
-    bw_img = cv2.threshold(gray_img, thresh, 255, cv2.THRESH_BINARY)[1]
+    bw_img = cv2.threshold(gray_img, threshold, 255, cv2.THRESH_BINARY)[1]
     cv2.imwrite('/home/pi/nimble_hub/outputs/bw.jpg',bw_img)
         
     edges = cv2.Canny(gray_img,100,250)

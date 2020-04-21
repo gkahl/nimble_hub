@@ -5,18 +5,19 @@ import cv2
 import importlib
 import objectDetect as obj
 import objectDict as oDict
+import sys
+
+
+if len(sys.argv) == 3:
+	exposure = sys.argv[1]
+	threshold = sys.argv[2]	
+print("exposure:" + str(exposure))
+print("threshold" + str(threshold))
 
 colorNames=["red","blue"]
 shapeNames=["Triangle","Rectangle","Pentagon","Hexagon","Circle"]
 
-
-obj.initializeFrames()
-obj.imageManip()
+obj.initializeFrames(exposure)
+obj.imageManip(threshold)
 shapeList = obj.shapefind(obj.gray_img)
-#print(shapeList)
 oDict.makeObjects(shapeList)
-
-
-
-
-
